@@ -6,24 +6,17 @@ Radix CLI in the [Radix documentation](https://radix.equinor.com/docs/topic-radi
 
 ## Installation
 
-### If using Go:
-```sh
-go install github.com/equinor/radix-cli/cli/rx@latest
-```
-
 ### Linux or Mac
 
-#### Binaries
+Pick a [version](https://github.com/equinor/radix-cli/releases) of the cli you want to install, and download and extract the tar.gz file into the `bin` folder like the following example (replacing the platform and architecture with the one you picked).
 
-Pick the appropriate binaries for your machine
+|                   | AMD64                                       | ARM64                                      |
+| ----------------- | ------------------------------------------- | ------------------------------------------ |
+| Mac               | `radix-cli_<version>_Darwin_x86_64.tar.gz`  | `radix-cli_<version>_Darwin_arm64.tar.gz`  |
+| Linux             | `radix-cli_<version>_Linux_x86_64.tar.gz`   | `radix-cli_<version>_Linux_arm64.tar.gz`   |
 
-`radix-cli_<version>_Darwin_i386.tar.gz` `radix-cli_<version>_Darwin_x86_64.tar.gz`
+<br/>
 
-`radix-cli_<version>_Linux_i386.tar.gz` `radix-cli_<version>_Linux_x86_64.tar.gz`
-
-`radix-cli_<version>_Linux_armv6.tar.gz` `radix-cli_<version>_Linux_arm64.tar.gz`
-
-Pick a [version](https://github.com/equinor/radix-cli/releases) of the cli you want to install, or the latest version, then download and extract the tar file into the `bin` folder like the following example (replacing the version and architecture with the one you picked).
 
 ```bash
 LATEST_VERSION=$(
@@ -40,26 +33,23 @@ mv rx /usr/local/bin/rx
 rm ${rx_tar}
 ```
 
-#### Or run using Docker image
-
-Authenticate with github via docker using a token with _read:packages_ access. Make sure you also enable single sign-on for Equinor after [generating your token](https://github.com/settings/tokens). Replace `<github username>` and `<access token>`.
+### Run as Docker image
 
 ```bash
-docker login -u <github username> -p <access token> ghcr.io
-
-alias rx="docker run -it -v ${HOME}/.radix:/home/radix/.radix ghcr.io/equinor/radix/rx:latest"
+docker run -e APP_SERVICE_ACCOUNT_TOKEN=$(az account get-access-token --resource 6dae42f8-4368-4678-94ff-3960e28e3630 | jq .accessToken -r) ghcr.io/equinor/radix/rx:latest get application --token-environment
 ```
 
-(Typically your `HOME` variable will be `/Users/<username>` on a Mac and `/home/<username>` on Linux)
+### Install with Go
+```sh
+go install github.com/equinor/radix-cli/cli/rx@latest
+```
 
 ### Windows
 
-#### Binaries
-
 Visit https://github.com/equinor/radix-cli/releases/latest and download the appropriate binaries for your machine.
 
-`radix-cli_<version>_Windows_i386.tar.gz` (32 bit)
-`radix-cli_<version>_Windows_x86_64.tar.gz` (64 bit)
+- **AMD64**: `radix-cli_<version>_Windows_x86_64.tar.gz`
+- **ARM64**: `radix-cli_<version>_Windows_arm64.tar.gz`
 
 Either run the tar command to extract the contents (replacing the filename with the one you downloaded)
 
@@ -71,24 +61,6 @@ or use a third-party tool like _WinZip_, _WinRar_ or _7zip_ to extract it.
 
 Make sure the directory path you put the executable into is in the global `PATH` environment variable to use the `rx` command anywhere.
 
-#### Or run using Docker image
-
-See docker for linux/mac above for authentication guide.
-
-If your terminal has a profile or auto-run script, you can add the following to it:
-
-```batch
-DOSKEY rx=docker run -it -v %HOME%:/home/radix ghcr.io/equinor/radix/rx:latest $*
-```
-
-If not, you must add a new script file called `rx.bat` in a directory, present in `PATH`, with the following content
-
-```batch
-docker run -it -v %HOME%:/home/radix ghcr.io/equinor/radix/rx:latest $*
-```
-
-(Typically your `HOME` variable will be `C:\Users\<username>`)
-
 ## Modes of running
 
 There are generally two modes of running the CLI. Both cases may use configuration in your `<home>/.radix` folder:
@@ -98,21 +70,6 @@ There are generally two modes of running the CLI. Both cases may use configurati
 CLI will use users privileges to access the Radix API server. Context information is stored in the `<home>/.radix` folder. First time you run it (i.e. `rx get logs environment -a <your application> -e <your environment>`) a prompt is provided for you to authenticated with Azure using a device code flow. A message like this appears in your terminal:
 
 `To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code ABCDEFGHI to authenticate.`
-
-### Using a machine user
-
-CLI can also use a machine user for authenticating with the API server. This will be done through a bearer token of a service account connected to your application. The service account token will be provided to you under configuration page of your application. For more information on this see [this](https://www.radix.equinor.com/guides/deploy-only/#machine-user-token) guide. There are two ways to feed this token to the CLI. Either using standard input. This should be done like this:
-
-`echo <your service account token> | rx --token-stdin list applications`
-
-Alternatively, you can use an environment variable for the token:
-
-```
-export APP_SERVICE_ACCOUNT_TOKEN=<your service account token>
-rx --token-environment get application
-```
-
-Note that using your own token obtained through `az account get-access-token` may not work, because the size of the token may be too big.
 
 ### Using docker image
 
@@ -140,10 +97,6 @@ We are using the [cobra framework](https://github.com/spf13/cobra) for handling 
 cobra add <commandName>
 ```
 
-### Contributing
-
-Want to [contribute](./CONTRIBUTING.md)?
-
 ### Generate client stubs
 
 Client code is generated from swagger contract definition of the latest contract of the Radix API server. We use [go-swagger](https://github.com/go-swagger/go-swagger/blob/master/docs/install.md). Install it by:
@@ -157,24 +110,24 @@ make generate-client
 
 NOTE: If there is a change to the API, you make need to point to the API environment which holds the correct swagger definition.
 
-### Building and releasing
+## Release Process
 
-We are making releases available as GitHub releases using [go-releaser](https://goreleaser.com/). The release process is controlled by the `.goreleaser.yml` file. 
+Merging a pull request into `main` triggers the **Prepare release pull request** workflow.  
+This workflow analyzes the commit messages to determine whether the version number should be bumped — and if so, whether it's a major, minor, or patch change.  
 
-1. Create and push the new version as a tag: `git tag v0.0.1` and `git push origin v0.0.1`
-2. If something goes wrong:
-   - open the GitHub repository and delete [created tag](https://github.com/equinor/radix-cli/tags/) (with release)
-   - delete it locally ` git tag -d v0.0.1`
-   - reset changes `git reset --hard`
-   - tag the commit againg and push: `git tag v0.0.1` and `git push origin v0.0.1`
+It then creates a pull request for releasing a new stable version (e.g. `1.2.3`):
+Merging this request triggers the **Create releases and tags** workflow, which reads the version stored in `version.txt`, creates a GitHub release, and tags it accordingly.
 
-To generate a local version for debugging purposes, it can be built using:
+The new tag triggers the **CD** workflow, which:
 
-```
-CGO_ENABLED=0 GOOS=darwin go build -ldflags "-s -w" -a -installsuffix cgo -o ./rx ./cli/rx
-```
+- builds and pushes new container image tags (current version and `latest`) to `ghcr.io`
+- builds and uploads Radix CLI binaries to the GitHub release.
 
-### Security
+## Contributing
+
+Want to [contribute](./CONTRIBUTING.md)?
+
+## Security
 
 There is an app registration associated with the Radix CLI, `Omnia Radix CLI`, with API permissions to `Omnia Radix Web Console - Platform Clusters` to allow for the device code flow when running in interactive mode
 

@@ -14,6 +14,9 @@ All notable changes to this project will be documented in this file.
 - *(cicd)* Refactor release process - ([a2e07c3](https://github.com/nilsgstrabo/radix-cli/commit/a2e07c3eac04f5a629f0153d51df55ccf6e5603c)) by @nilsgstrabo in [#1](https://github.com/nilsgstrabo/radix-cli/pull/1)
 
 
+## New Contributors ❤️
+
+* @github-actions[bot] made their first contribution in [#2](https://github.com/nilsgstrabo/radix-cli/pull/2)
 ## [1.35.0](https://github.com/nilsgstrabo/radix-cli/compare/v1.34.0..v1.35.0) - 2025-10-07
 
 ### 🚀 Features
